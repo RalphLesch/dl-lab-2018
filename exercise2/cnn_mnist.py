@@ -7,6 +7,7 @@ import os
 import pickle
 
 import numpy as np
+import tensorflow as tf
 
 
 def one_hot(labels):
@@ -62,13 +63,11 @@ def mnist(datasets_dir='./data'):
 
 def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_filters, batch_size, filter_size):
     # DONE: train and validate your convolutional neural networks with the provided data and hyperparameters
-    import tensorflow as tf
 
-    # Log GPU or CPU
-    #with tf.device('/gpu:0'):
-        #with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
+    # Log GPU and CPU
+    #with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
         #    tf.keras.backend.set_session(sess)
-    #with tf.device('/gpu:0'):
+    
     model = tf.keras.models.Sequential([
         tf.keras.layers.Conv2D(input_shape=(28,28,1)
             ,kernel_size=filter_size
@@ -91,10 +90,10 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
         ,tf.keras.layers.Dense(10, activation='softmax')
     ])
 
-    model.compile(optimizer=tf.keras.optimizers.SGD(lr=lr),
-                  loss='categorical_crossentropy',
-                  metrics=['accuracy'])
-        
+    model.compile(optimizer=tf.keras.optimizers.SGD(lr=lr)
+                 ,loss='categorical_crossentropy'
+                 ,metrics=['accuracy'])
+    
     history = model.fit(x_train, y_train, epochs=num_epochs
                         ,batch_size=batch_size
                         ,validation_data=(x_valid,y_valid))
@@ -109,8 +108,8 @@ def test(x_test, y_test, model):
     metric_values = model.evaluate(x=x_test, y=y_test)
     print(' , '.join('{}: {}'.format(n,v) for n, v in zip(model.metrics_names, metric_values)))
     # error = 1 - acc
-    test_error = 1 - metric_values[1]
-    return test_error
+    return 1 - metric_values[1]
+    #return test_error
 
 
 if __name__ == "__main__":
