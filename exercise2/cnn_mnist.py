@@ -61,7 +61,7 @@ def mnist(datasets_dir='./data'):
 
 
 def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_filters, batch_size, filter_size):
-    # TODO: train and validate your convolutional neural networks with the provided data and hyperparameters
+    # DONE: train and validate your convolutional neural networks with the provided data and hyperparameters
     import tensorflow as tf
 
     # Log GPU or CPU
@@ -77,6 +77,7 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
             ,padding='same'
             ,activation='relu'
             ,name='layer_conv1')
+        ,tf.keras.layers.MaxPooling2D(pool_size=2, strides=2)
         ,tf.keras.layers.Conv2D(
             kernel_size=filter_size
             ,strides=1
@@ -100,11 +101,11 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
     
     # error = 1 - accuracy
     learning_curve = [1 - x for x in history.history['val_acc']]
-    return learning_curve, model  # TODO: Return the validation error after each epoch (i.e learning curve) and your model
+    return learning_curve, model  # DONE: Return the validation error after each epoch (i.e learning curve) and your model
 
 
 def test(x_test, y_test, model):
-    # TODO: test your network here by evaluating it on the test data
+    # DONE: test your network here by evaluating it on the test data
     metric_values = model.evaluate(x=x_test, y=y_test)
     print(' , '.join('{}: {}'.format(n,v) for n, v in zip(model.metrics_names, metric_values)))
     # error = 1 - acc
