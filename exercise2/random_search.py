@@ -41,8 +41,9 @@ class MyWorker(Worker):
 
         # TODO: train and validate your convolutional neural networks here
         
-        with tf.Session() as sess:
+        with tf.Session() as sess: # Fix for multiple calls
             tf.keras.backend.set_session(sess)
+            
             _, model = train_and_validate(
                 self.x_train, self.y_train, self.x_valid, self.y_valid
                 ,epochs, lr, num_filters, batch_size, filter_size)
@@ -143,9 +144,12 @@ filter_size = config["filter_size"]
 
 x_train, y_train, x_valid, y_valid, x_test, y_test = mnist("./")
 
-learning_curve, model = train_and_validate(x_train, y_train, x_valid, y_valid, int(args.budget), lr, num_filters, batch_size, filter_size)
+with tf.Session() as sess:
+    tf.keras.backend.set_session(sess)
+    
+    learning_curve, model = train_and_validate(x_train, y_train, x_valid, y_valid, int(args.budget), lr, num_filters, batch_size, filter_size)
 
-test_error = test(x_test, y_test, model)
+    test_error = test(x_test, y_test, model)
 
 # save results in a dictionary and write them into a .json file
 results = dict()
