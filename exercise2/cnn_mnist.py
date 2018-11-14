@@ -140,9 +140,12 @@ if __name__ == "__main__":
     # train and test convolutional neural network
     x_train, y_train, x_valid, y_valid, x_test, y_test = mnist(args.input_path)
 
-    learning_curve, model = train_and_validate(x_train, y_train, x_valid, y_valid, epochs, lr, num_filters, batch_size, filter_size)
+    with tf.Session() as sess:
+        tf.keras.backend.set_session(sess)
+        
+        learning_curve, model = train_and_validate(x_train, y_train, x_valid, y_valid, epochs, lr, num_filters, batch_size, filter_size)
 
-    test_error = test(x_test, y_test, model)
+        test_error = test(x_test, y_test, model)
 
     # save results in a dictionary and write them into a .json file
     results = dict()
