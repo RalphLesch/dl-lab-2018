@@ -10,8 +10,9 @@ import ConfigSpace as CS
 from hpbandster.core.worker import Worker
 import argparse
 
-from cnn_mnist_solution import mnist
-
+from cnn_mnist import mnist, train_and_validate, test
+import ConfigSpace.hyperparameters as CSH
+import tensorflow as tf
 
 class MyWorker(Worker):
 
@@ -34,10 +35,22 @@ class MyWorker(Worker):
         lr = config["learning_rate"]
         num_filters = config["num_filters"]
         batch_size = config["batch_size"]
+        filter_size = config["filter_size"]
+
         epochs = budget
 
         # TODO: train and validate your convolutional neural networks here
-
+        
+        with tf.Session() as sess: # Fix for multiple calls
+            tf.keras.backend.set_session(sess)
+            
+            _, model = train_and_validate(
+                self.x_train, self.y_train, self.x_valid, self.y_valid
+                ,epochs, lr, num_filters, batch_size, filter_size)
+            validation_error = test(self.x_test, self.y_test, model)
+        print('error: ', validation_error)
+        
+        
         # TODO: We minimize so make sure you return the validation error here
         return ({
             'loss': validation_error,  # this is the a mandatory field to run hyperband
@@ -49,14 +62,24 @@ class MyWorker(Worker):
         config_space = CS.ConfigurationSpace()
 
         # TODO: Implement configuration space here. See https://github.com/automl/HpBandSter/blob/master/hpbandster/examples/example_5_keras_worker.py  for an example
+        
+        config_space.add_hyperparameters([
+             CSH.UniformFloatHyperparameter('learning_rate', lower=1e-4, upper=1e-1, default_value='1e-2', log=True)
+            ,CSH.UniformIntegerHyperparameter('batch_size', lower=16, upper=128, default_value=64, log=True)
+            ,CSH.UniformIntegerHyperparameter('num_filters', lower=8, upper=64, default_value=32, log=True)
+            ,CSH.CategoricalHyperparameter('filter_size', [3, 5])
+        ])
 
         return config_space
 
 
 parser = argparse.ArgumentParser(description='Example 1 - sequential and local execution.')
+# NOTE: default parameters changed to fix excercise
 parser.add_argument('--budget', type=float,
-                    help='Maximum budget used during the optimization, i.e the number of epochs.', default=12)
-parser.add_argument('--n_iterations', type=int, help='Number of iterations performed by the optimizer', default=20)
+                    help='Maximum budget used during the optimization, i.e the number of epochs.', default=6)
+parser.add_argument('--n_iterations', type=int, help='Number of iterations performed by the optimizer', default=50)
+parser.add_argument("--output_path", default="./", type=str, nargs="?",
+                        help="Path where the results will be stored")
 args = parser.parse_args()
 
 # Step 1: Start a nameserver
@@ -112,3 +135,36 @@ import matplotlib.pyplot as plt
 plt.savefig("random_search.png")
 
 # TODO: retrain the best configuration (called incumbent) and compute the test error
+
+config = id2config[incumbent]['config']
+lr = config["learning_rate"]
+num_filters = config["num_filters"]
+batch_size = config["batch_size"]
+filter_size = config["filter_size"]
+
+x_train, y_train, x_valid, y_valid, x_test, y_test = mnist("./")
+
+with tf.Session() as sess:
+    tf.keras.backend.set_session(sess)
+    
+    learning_curve, model = train_and_validate(x_train, y_train, x_valid, y_valid, int(args.budget), lr, num_filters, batch_size, filter_size)
+
+    test_error = test(x_test, y_test, model)
+
+# save results in a dictionary and write them into a .json file
+results = dict()
+results["lr"] = lr
+results["num_filters"] = num_filters
+results["batch_size"] = batch_size
+results["filter_size"] = filter_size
+results["learning_curve"] = learning_curve
+results["test_error"] = test_error
+
+path = os.path.join(args.output_path, "results")
+os.makedirs(path, exist_ok=True)
+
+fname = os.path.join(path, "results_run_random_search.json")
+
+fh = open(fname, "w")
+json.dump(results, fh)
+fh.close()
