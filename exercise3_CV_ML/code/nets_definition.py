@@ -212,7 +212,7 @@ def FCN_Seg(self, is_training=True):
         # but that also fuse the upsampled features with the corresponding skip connection (DB4_skip_connection)
         # through concatenation. After that use a convolution with kernel 3x3 to produce 256 output feature maps 
        
-        up = refinement(up, 256, 2, DB4_skip_connection, 3, '4.1')
+        up = refinement(x, 256, 2, DB4_skip_connection, 3, '4.1')
        
         # TODO (4.2) - Repeat TODO(4.1) now producing 160 output feature maps and fusing the upsampled features 
         # with the corresponding skip connection (DB3_skip_connection) through concatenation.
@@ -234,7 +234,7 @@ def FCN_Seg(self, is_training=True):
         up = TransitionUp_elu(up, 120, 2, '4.4_upsample_120_2x')
         if shape(up) > shape(self.tgt_image):
             up = crop(up, self.tgt_image)
-        current_up4 = up
+        current_up5 = up
         
         End_maps_decoder1 = slim.conv2d(current_up5, self.N_classes, [1, 1], scope='Final_decoder') #(batchsize, width, height, N_classes)
         
